@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Game Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #f8fafc;
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.1);
+            border-top: 8px solid #10b981;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+    </style>
+</head>
+<body class="antialiased min-h-screen">
+
+    <!-- HEADER FLOTTANT -->
+    <div id="header" class="fixed top-0 left-0 w-full p-4 flex justify-between items-center z-50 hidden">
+        <button onclick="setScreen('home')" class="bg-white/90 backdrop-blur text-red-500 p-3 rounded-2xl shadow-xl hover:bg-red-50 transition-all border border-red-100">
+            <i data-lucide="log-out" class="w-6 h-6"></i>
+        </button>
+        
+        <div id="cagnotte-display" onclick="handleCagnotteAction()" class="group bg-white/90 backdrop-blur px-6 py-3 rounded-2xl shadow-xl border border-yellow-200 flex items-center cursor-pointer transition-all hover:scale-105 active:scale-95">
+            <div class="bg-yellow-400 p-2 rounded-lg mr-3 group-hover:rotate-12 transition-transform">
+                <i data-lucide="coins" class="w-5 h-5 text-yellow-900"></i>
+            </div>
+            <div>
+                <p class="text-[10px] uppercase font-bold text-yellow-600 leading-none mb-1">Cagnotte</p>
+                <p class="text-xl font-black text-gray-800 leading-none"><span id="cagnotte-val">0</span> <small class="text-xs">pts</small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECRAN ACCUEIL -->
+    <div id="screen-home" class="min-h-screen flex items-center justify-center p-6">
+        <div class="max-w-md w-full bg-white rounded-[2.5rem] shadow-2xl p-10 text-center border border-gray-100">
+            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-3xl flex items-center justify-center mx-auto mb-8">
+                <i data-lucide="layout-dashboard" class="w-10 h-10"></i>
+            </div>
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2">Bonjour !</h1>
+            <p class="text-gray-500 mb-10 text-lg">Qui utilise l'application ?</p>
+            
+            <div class="space-y-4">
+                <button onclick="setScreen('parent')" class="w-full group bg-gray-900 hover:bg-indigo-600 text-white p-6 rounded-3xl transition-all duration-300 flex items-center shadow-lg">
+                    <span class="bg-white/10 p-3 rounded-2xl mr-4 group-hover:bg-white/20"><i data-lucide="shield-check" class="w-6 h-6"></i></span>
+                    <span class="text-xl font-bold">Mode Parent</span>
+                </button>
+                <button onclick="setScreen('enfant')" class="w-full group bg-emerald-500 hover:bg-emerald-600 text-white p-6 rounded-3xl transition-all duration-300 flex items-center shadow-lg">
+                    <span class="bg-white/10 p-3 rounded-2xl mr-4 group-hover:bg-white/20"><i data-lucide="smile" class="w-6 h-6"></i></span>
+                    <span class="text-xl font-bold">Mode Enfant</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECRAN PARENT -->
+    <div id="screen-parent" class="hidden min-h-screen pt-28 pb-10 px-6 max-w-6xl mx-auto">
+        <div class="grid lg:grid-cols-3 gap-8">
+            
+            <!-- FORMULAIRES -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="plus-circle" class="w-5 h-5 mr-2 text-blue-500"></i> Nouveau Jeu</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="p-game-title" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-400 outline-none" placeholder="Nom de l'activité">
+                        <input type="text" id="p-game-img" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-400 outline-none" placeholder="Lien d'une image">
+                        <button onclick="addGame()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">Ajouter</button>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4 flex items-center"><i data-lucide="gift" class="w-5 h-5 mr-2 text-yellow-500"></i> Nouvelle Récompense</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="p-reward-title" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-yellow-400 outline-none" placeholder="Titre">
+                        <input type="number" id="p-reward-price" class="w-full p-4 bg-gray-50 rounded-2xl border-none focus:ring-2 focus:ring-yellow-400 outline-none" placeholder="Prix en pièces">
+                        <button onclick="addReward()" class="w-full bg-yellow-500 text-white py-4 rounded-2xl font-bold hover:bg-yellow-600 transition-colors shadow-lg shadow-yellow-100">Créer</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LISTE DE GESTION -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 h-full min-h-[500px]">
+                    <h3 class="text-2xl font-bold mb-6">Inventaire & Gestion</h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Jeux actifs</p>
+                            <div id="p-list-games" class="space-y-3 custom-scroll max-h-[400px] overflow-y-auto"></div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Récompenses</p>
+                            <div id="p-list-rewards" class="space-y-3 custom-scroll max-h-[400px] overflow-y-auto"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ECRAN ENFANT -->
+    <div id="screen-enfant" class="hidden min-h-screen pt-28 pb-10 px-6 max-w-6xl mx-auto space-y-12">
+        <section>
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mr-4">
+                    <i data-lucide="star" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Gagne des pièces !</h2>
+            </div>
+            <div id="e-list-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </section>
+
+        <section>
+            <div class="flex items-center mb-6">
+                <div class="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center mr-4">
+                    <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-bold">Tes Récompenses</h2>
+            </div>
+            <div id="e-list-rewards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+        </section>
+    </div>
+
+    <!-- MODALE : AJUSTEMENT CAGNOTTE DIRECT -->
+    <div id="modal-coins" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2rem] p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center">
+            <h2 class="text-2xl font-bold mb-2">Modifier la cagnotte</h2>
+            <p class="text-gray-500 mb-6 text-sm">Ajoutez ou retirez des pièces directement.</p>
+            <input type="number" id="coin-adjust-val" class="w-full text-center text-4xl font-black p-5 bg-gray-50 rounded-2xl mb-6 outline-none focus:ring-4 focus:ring-yellow-200" placeholder="0">
+            <div class="flex gap-3">
+                <button onclick="adjustCoins()" class="flex-1 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-indigo-600 transition-colors">Valider</button>
+                <button onclick="closeModal('modal-coins')" class="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl font-bold hover:bg-gray-200 transition-colors">Annuler</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE : MISE ENFANT -->
+    <div id="modal-bet" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center">
+            <h2 class="text-2xl font-bold mb-2">Combien paries-tu ?</h2>
+            <p id="bet-max-info" class="text-emerald-600 font-bold mb-6 text-sm"></p>
+            <input type="number" id="bet-input-val" class="w-full text-center text-5xl font-black p-6 bg-emerald-50 rounded-3xl mb-8 outline-none focus:ring-4 focus:ring-emerald-200 text-emerald-700" placeholder="0">
+            <div class="flex flex-col gap-3">
+                <button onclick="submitBet()" class="w-full bg-emerald-500 text-white py-5 rounded-3xl font-bold text-xl hover:bg-emerald-600 shadow-lg shadow-emerald-100 transition-all">Parier et Jouer !</button>
+                <button onclick="closeModal('modal-bet')" class="w-full text-gray-400 font-bold py-2">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SYNCHRO : CHARGEMENT ENFANT -->
+    <div id="modal-waiting" class="hidden fixed inset-0 bg-gray-900 z-[200] flex flex-col items-center justify-center p-8 text-center">
+        <div class="spinner mb-10"></div>
+        <h2 id="wait-main-text" class="text-white text-5xl font-black mb-6 tracking-tight">Prenez le jeu</h2>
+        <div class="bg-white/10 px-8 py-4 rounded-full border border-white/20 backdrop-blur">
+            <p class="text-blue-200 font-medium flex items-center italic">
+                <i data-lucide="hourglass" class="w-5 h-5 mr-3 animate-pulse"></i>
+                En attente de la validation parentale...
+            </p>
+        </div>
+    </div>
+
+    <!-- SYNCHRO : VALIDATION PARENT -->
+    <div id="modal-validation" class="hidden fixed inset-0 bg-gray-900/80 backdrop-blur-md z-[200] flex items-center justify-center p-4">
+        <div class="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl border-t-8 border-indigo-600 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl mb-6">
+                <i data-lucide="activity" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-3xl font-black mb-2">Pari de l'enfant</h2>
+            <p class="text-gray-500 mb-8">L'enfant a misé <span id="v-bet-val" class="text-indigo-600 font-black text-xl">0</span> pièces.</p>
+            
+            <div class="bg-gray-50 p-6 rounded-3xl mb-8">
+                <p class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest">Résultat Final (Gain/Perte)</p>
+                <input type="number" id="v-adjustment" class="w-full text-center text-4xl font-black bg-transparent outline-none focus:text-indigo-600" placeholder="0">
+            </div>
+
+            <button onclick="completeValidation()" class="w-full bg-indigo-600 text-white py-5 rounded-3xl font-bold text-xl shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all">Confirmer le résultat</button>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIQUE ET ETAT ---
+        const STORAGE_KEY = 'family_app_v3_state';
+        
+        const defaultState = {
+            cagnotte: 10,
+            games: [
+                { id: '1', title: 'Ranger la chambre', img: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400&q=80' },
+                { id: '2', title: 'Faire ses devoirs', img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&q=80' }
+            ],
+            rewards: [
+                { id: '1', title: '1h de Jeu Vidéo', price: 50 },
+                { id: '2', title: 'Choisir le dîner', price: 100 }
+            ],
+            pendingBet: null,
+            status: 'idle', // idle | waiting
+            betStartTime: 0
+        };
+
+        let localScreen = 'home';
+
+        function getState() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : defaultState;
+        }
+
+        function saveState(state) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            updateUI();
+        }
+
+        // --- NAVIGATION ---
+        function setScreen(name) {
+            localScreen = name;
+            document.querySelectorAll('[id^="screen-"]').forEach(s => s.classList.add('hidden'));
+            document.getElementById('screen-' + name).classList.remove('hidden');
+            document.getElementById('header').classList.toggle('hidden', name === 'home');
+            updateUI();
+        }
+
+        // --- ACTIONS PARENT ---
+        function addGame() {
+            const t = document.getElementById('p-game-title');
+            const i = document.getElementById('p-game-img');
+            if(!t.value) return;
+            const state = getState();
+            state.games.push({ 
+                id: Date.now().toString(), 
+                title: t.value, 
+                img: i.value || `https://source.unsplash.com/featured/400x300?${encodeURIComponent(t.value)}`
+            });
+            saveState(state);
+            t.value = ''; i.value = '';
+        }
+
+        function addReward() {
+            const t = document.getElementById('p-reward-title');
+            const p = document.getElementById('p-reward-price');
+            if(!t.value || !p.value) return;
+            const state = getState();
+            state.rewards.push({ id: Date.now().toString(), title: t.value, price: parseInt(p.value) });
+            saveState(state);
+            t.value = ''; p.value = '';
+        }function removeItem(type, id) {
+            const state = getState();
+            state[type] = state[type].filter(x => x.id !== id);
+            saveState(state);
+        }
+
+        function handleCagnotteAction() {
+            if(localScreen === 'parent') {
+                document.getElementById('modal-coins').classList.remove('hidden');
+            }
+        }
+
+        function adjustCoins() {
+            const val = parseInt(document.getElementById('coin-adjust-val').value) || 0;
+            const state = getState();
+            state.cagnotte += val;
+            saveState(state);
+            closeModal('modal-coins');
+            document.getElementById('coin-adjust-val').value = '';
+        }
+
+        function completeValidation() {
+            const adj = parseInt(document.getElementById('v-adjustment').value) || 0;
+            const state = getState();
+            state.cagnotte += adj;
+            state.status = 'idle';
+            state.pendingBet = null;
+            saveState(state);
+            closeModal('modal-validation');
+            document.getElementById('v-adjustment').value = '';
+        }
+
+        // --- ACTIONS ENFANT ---
+        function startBetSession() {
+            const state = getState();
+            document.getElementById('bet-max-info').innerText = `Tu as ${state.cagnotte} pièces disponibles`;
+            document.getElementById('modal-bet').classList.remove('hidden');
+        }
+
+        function submitBet() {
+            const val = parseInt(document.getElementById('bet-input-val').value);
+            const state = getState();
+            if(!val || val <= 0) return;
+            if(val > state.cagnotte) {
+                alert("Oups ! Tu n'as pas assez de pièces pour parier autant.");
+                return;
+            }
+
+            state.cagnotte -= val; // Débit immédiat
+            state.pendingBet = val;
+            state.status = 'waiting';
+            state.betStartTime = Date.now();
+            saveState(state);
+            closeModal('modal-bet');
+            document.getElementById('bet-input-val').value = '';
+        }
+
+        function redeemReward(rewardId) {
+            const state = getState();
+            const reward = state.rewards.find(r => r.id === rewardId);
+            if(state.cagnotte < reward.price) {
+                alert("Continue tes efforts, il te manque encore quelques pièces !");
+                return;
+            }
+            if(confirm(`Prendre "${reward.title}" pour ${reward.price} pièces ?`)) {
+                state.cagnotte -= reward.price;
+                saveState(state);
+                alert("C'est validé ! 🎉");
+            }
+        }
+
+        // --- UI RENDER ---
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function updateUI() {
+            const state = getState();
+            
+            // Sync cagnotte
+            document.getElementById('cagnotte-val').innerText = state.cagnotte;
+
+            // Listes Parent
+            if(localScreen === 'parent') {
+                document.getElementById('p-list-games').innerHTML = state.games.map(g => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl group border border-transparent hover:border-blue-100 transition-all">
+                        <span class="font-semibold text-gray-700 truncate mr-2">${g.title}</span>
+                        <button onclick="removeItem('games', '${g.id}')" class="text-gray-300 hover:text-red-500 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                `).join('') || '<p class="text-gray-400 text-sm italic">Aucun jeu créé.</p>';
+
+                document.getElementById('p-list-rewards').innerHTML = state.rewards.map(r => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-transparent hover:border-yellow-100 transition-all">
+                        <div class="truncate mr-2">
+                            <p class="font-semibold text-gray-700 leading-none mb-1">${r.title}</p>
+                            <p class="text-[10px] font-black text-yellow-600 uppercase tracking-tighter">${r.price} PIECES</p>
+                        </div>
+                        <button onclick="removeItem('rewards', '${r.id}')" class="text-gray-300 hover:text-red-500 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                `).join('') || '<p class="text-gray-400 text-sm italic">Aucune récompense créée.</p>';
+            }
+
+            // Listes Enfant
+            if(localScreen === 'enfant') {
+                document.getElementById('e-list-games').innerHTML = state.games.map(g => `
+                    <div class="bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all border border-gray-100 flex flex-col h-full">
+                        <img src="${g.img}" class="h-32 w-full object-cover">
+                        <div class="p-6 flex-grow flex flex-col justify-between">
+                            <h4 class="font-bold text-gray-800 mb-4">${g.title}</h4>
+                            <button onclick="startBetSession()" class="w-full bg-emerald-100 text-emerald-700 py-3 rounded-2xl font-bold hover:bg-emerald-500 hover:text-white transition-all">Choisir</button>
+                        </div>
+                    </div>
+                `).join('');
+
+                document.getElementById('e-list-rewards').innerHTML = state.rewards.map(r => `
+                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col justify-between h-full text-center">
+                        <div>
+                            <div class="bg-yellow-50 text-yellow-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                                <i data-lucide="gift" class="w-6 h-6"></i>
+                            </div>
+                            <h4 class="font-bold text-gray-800 mb-1">${r.title}</h4>
+                            <p class="text-yellow-600 font-black text-lg mb-4">${r.price} <small class="text-[10px] uppercase">pts</small></p>
+                        </div>
+                        <button onclick="redeemReward('${r.id}')" class="w-full ${state.cagnotte >= r.price ? 'bg-yellow-400 text-yellow-900 shadow-md' : 'bg-gray-100 text-gray-400'} py-3 rounded-2xl font-bold transition-all">Prendre</button>
+                    </div>
+                `).join('');
+            }
+
+            // Gestion de la synchronisation des modales (WAITING / VALIDATION)
+            const waitMod = document.getElementById('modal-waiting');
+            const valMod = document.getElementById('modal-validation');
+
+            if(state.status === 'waiting') {
+                if(localScreen === 'enfant') waitMod.classList.remove('hidden');
+                if(localScreen === 'parent') {
+                    valMod.classList.remove('hidden');
+                    document.getElementById('v-bet-val').innerText = state.pendingBet;
+                }
+            } else {
+                waitMod.classList.add('hidden');
+                valMod.classList.add('hidden');
+            }
+
+            lucide.createIcons();
+        }
+
+        // --- TEMPS REEL & CHRONO ---
+        // Ecouter les changements faits dans d'autres fenêtres/appareils (si même domaine)
+        window.addEventListener('storage', (e) => {
+            if(e.key === STORAGE_KEY) updateUI();
+        });
+
+        // Polling pour garantir la mise à jour si storage event ne suffit pas (certains navigateurs mobiles)
+        setInterval(updateUI, 1000);
+
+        // Gestion du texte de chargement évolutif
+        setInterval(() => {
+            const state = getState();
+            if(state.status === 'waiting') {
+                const elapsed = Date.now() - state.betStartTime;
+                const txt = document.getElementById('wait-main-text');
+                if(txt) {
+                    txt.innerText = (elapsed < 10000) ? "Prenez le jeu" : "Jeu en cours...";
+                }
+            }
+        }, 1000);
+
+        // Initialisation
+        updateUI();
+    </script>
+</body>
+</html>
